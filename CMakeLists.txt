@@ -106,7 +106,6 @@ endif()
 # Only perform the installation steps when Catch is not being used as
 # a subproject via `add_subdirectory`, or the destinations will break,
 # see https://github.com/catchorg/Catch2/issues/1373
-if (NOT_SUBPROJECT)
     configure_package_config_file(
         ${CMAKE_CURRENT_LIST_DIR}/CMake/Catch2Config.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/Catch2Config.cmake
@@ -136,6 +135,39 @@ if (NOT_SUBPROJECT)
     )
     set(CMAKE_SIZEOF_VOID_P ${CATCH2_CMAKE_SIZEOF_VOID_P})
 
+    # Generate pkg-config metadata
+    configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/CMake/catch2.pc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/catch2.pc
+      @ONLY
+    )
+    configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/CMake/catch2-with-main.pc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/catch2-with-main.pc
+      @ONLY
+    )
+
+    # CMake helper sources used by the generated configuration
+    set(EXTRAS_CMAKE_FILES
+        "extras/ParseAndAddCatchTests.cmake"
+        "extras/Catch.cmake"
+        "extras/CatchAddTests.cmake"
+    )
+    file(COPY ${EXTRAS_CMAKE_FILES}
+      DESTINATION
+        ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    export(
+      EXPORT 
+        Catch2Targets
+      FILE
+        Catch2Targets.cmake
+      NAMESPACE
+        Catch2::
+  )
+
+if (NOT_SUBPROJECT)
     install(
       FILES
         "${CMAKE_CURRENT_BINARY_DIR}/Catch2Config.cmake"
@@ -179,16 +211,6 @@ if (NOT_SUBPROJECT)
     set(PKGCONFIG_INSTALL_DIR
         "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig"
         CACHE PATH "Path where catch2.pc is installed"
-    )
-    configure_file(
-      ${CMAKE_CURRENT_SOURCE_DIR}/CMake/catch2.pc.in
-      ${CMAKE_CURRENT_BINARY_DIR}/catch2.pc
-      @ONLY
-    )
-    configure_file(
-      ${CMAKE_CURRENT_SOURCE_DIR}/CMake/catch2-with-main.pc.in
-      ${CMAKE_CURRENT_BINARY_DIR}/catch2-with-main.pc
-      @ONLY
     )
     install(
       FILES
